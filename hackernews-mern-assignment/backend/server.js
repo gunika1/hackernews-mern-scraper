@@ -11,7 +11,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+  })
+);
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -22,17 +27,25 @@ app.use("/api/auth", authRoutes);
 app.use("/api", storyRoutes);
 
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
 
-  app.listen(PORT, async () => {
-    console.log(`Server running on port ${PORT}`);
-    try {
-      const stories = await scrapeHackerNews();
-      console.log(`Scraped ${stories.length} Hacker News stories on startup`);
-    } catch (error) {
-      console.error("Startup scraping failed:", error.message);
-    }
-  });
+    app.listen(PORT, async () => {
+      console.log(`Server running on port ${PORT}`);
+
+      try {
+        const stories = await scrapeHackerNews();
+        console.log(
+          `Scraped ${stories.length} Hacker News stories on startup`
+        );
+      } catch (error) {
+        console.error("Startup scraping failed:", error.message);
+      }
+    });
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+    process.exit(1);
+  }
 };
 
 startServer();
